@@ -13,13 +13,12 @@
 ### 手動安裝步驟
 
 1. 安裝Python：[下載Python](https://www.python.org/downloads/) (安裝時勾選「Add Python to PATH」)
-2. 下載PDF工具箱：[下載最新版本](https://github.com/yourusername/pdf-toolkit/releases/latest)
-3. 解壓縮後，開啟命令提示符並進入該目錄
-4. 運行以下命令安裝依賴：
+2. 解壓縮後，開啟命令提示符並進入該目錄
+3. 運行以下命令安裝依賴：
    ```bash
    pip install -r requirements.txt
    ```
-5. 啟動應用：
+4. 啟動應用：
    ```bash
    streamlit run app.py
    ```
