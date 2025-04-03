@@ -2,7 +2,6 @@
 
 **PDF工具箱**是一個功能強大的多合一PDF處理應用程序，提供多種PDF處理功能，包括合併、分割、壓縮、優化、文字提取等。應用程序基於Python和Streamlit開發，擁有直觀的Web界面，適合各種PDF文檔處理需求。
 
-![PDF工具箱截圖](https://i.imgur.com/JY9kcG9.png)
 
 ## 主要功能
 
