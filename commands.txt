@@ -18,12 +18,3 @@ python -m pip install -r requirements-app.txt
 # 創建應用圖標
 python create_app_icon.py
 
-# 執行打包命令
-python pyinstaller_build.py
-
-# 打包後的文件位於 pdf-toolkit-app/dist/PDF工具箱/ 目錄中
-# 運行方式: 雙擊 PDF工具箱.exe 或 PDF工具箱.bat
-
-## 打包後分發方式
-# 1. 壓縮整個 PDF工具箱 目錄為ZIP文件
-# 2. 分享給他人，無需安裝Python即可運行 
