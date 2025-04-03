@@ -6,7 +6,7 @@
 
 ## 快速安裝指南
 
-### Windows用戶 (推薦方式)
+### Windows用戶 (推薦方式) 
 
 1. 下載[PDF工具箱安裝包](https://github.com/yourusername/pdf-toolkit/releases/latest)
 2. 解壓縮後，雙擊運行 `run_pdf_toolkit.bat`
