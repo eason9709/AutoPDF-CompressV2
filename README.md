@@ -6,7 +6,7 @@
 ## 快速安裝指南
 ### 所需組件
 
-- [Python 3.8 ~ 3.13](https://www.python.org/downloads/) (必須)
+- [Python 3.9 ~ 3.13](https://www.python.org/downloads/) (必須)
 - [Ghostscript](https://ghostscript.com/releases/gsdnld.html) (推薦，用於高級壓縮)
 - [Poppler](https://github.com/oschwartz10612/poppler-windows/releases/) (可選，用於舊版壓縮)
 
