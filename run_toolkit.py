@@ -5,11 +5,7 @@ import os
 import sys
 import subprocess
 import platform
-import pkg_resources
-import webbrowser
 import time
-import shutil
-from pathlib import Path
 
 # 設置控制台為UTF-8編碼
 if platform.system() == "Windows":
