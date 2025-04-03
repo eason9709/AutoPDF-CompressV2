@@ -91,17 +91,32 @@ streamlit run app.py
 **Windows用戶**
 1. 下載[Poppler for Windows](https://github.com/oschwartz10612/poppler-windows/releases/)
 2. 解壓到指定目錄（例如`C:\Program Files\poppler`）
-3. 將bin目錄（如`C:\Program Files\poppler\bin`）添加到系統PATH環境變數
+3. 將bin目錄添加到系統PATH環境變數：
+   - 右鍵點擊「此電腦」→「屬性」→「進階系統設定」→「環境變數」
+   - 在「系統變數」區域找到「Path」→ 點擊「編輯」
+   - 點擊「新增」→ 輸入`C:\Program Files\poppler\bin`（按您的實際安裝路徑修改）
+   - 點擊「確定」保存所有設定
+4. 重新啟動CMD或PowerShell，輸入`pdftoppm -v`檢查安裝是否成功
+
+**快速檢查Poppler安裝**
+在命令提示符中運行：
+```
+where pdftoppm
+pdftoppm -v
+```
+如顯示版本信息，則安裝成功。
 
 **macOS用戶**
 ```
 brew install poppler
 ```
+檢查：`pdftoppm -v`
 
 **Linux用戶**
 ```
 sudo apt-get install poppler-utils
 ```
+檢查：`pdftoppm -v`
 
 ## 使用指南
 
@@ -164,6 +179,17 @@ PDF工具箱提供三種壓縮模式：
 - 確保Python 3.8+已正確安裝且已添加到PATH環境變數中
 - 確保已安裝所有必要的Python套件
 - 嘗試使用 `run_pdf_toolkit.bat` 腳本，它會自動檢查環境並提供故障排除指引
+
+### 批處理腳本顯示亂碼或"不是內部或外部命令"錯誤
+- **編碼問題**: 批處理腳本需要使用UTF-8編碼才能正確顯示中文
+  - 確保腳本首行包含 `chcp 65001 > nul` 設置編碼為UTF-8
+  - 若出現亂碼，請在記事本中打開批處理文件，選擇「另存為」並設置編碼為「UTF-8」
+- **PATH問題**: 如果出現「不是內部或外部命令、可運行的程序或批處理文件」
+  - 確認Python和相關工具已添加到系統PATH環境變數
+  - 嘗試使用完整路徑執行命令: `%USERPROFILE%\AppData\Local\Programs\Python\Python311\Scripts\streamlit.exe run app.py`
+  - 或直接使用python執行: `python -m streamlit run app.py`
+- **Python版本問題**: Python 3.13可能與某些庫不完全兼容
+  - 如果使用Python 3.13遇到問題，建議安裝Python 3.11或3.12版本
 
 ### 壓縮功能效果有限
 - 壓縮效果取決於PDF文件的內容和結構
