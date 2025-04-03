@@ -111,14 +111,15 @@ Python啟動腳本的優勢：
 舊版壓縮功能需要安裝Poppler庫：
 
 **Windows用戶**
-1. 下載[Poppler for Windows](https://github.com/oschwartz10612/poppler-windows/releases/)
-2. 解壓到指定目錄（例如`C:\Program Files\poppler`）
-3. 將bin目錄添加到系統PATH環境變數：
-   - 右鍵點擊「此電腦」→「屬性」→「進階系統設定」→「環境變數」
-   - 在「系統變數」區域找到「Path」→ 點擊「編輯」
-   - 點擊「新增」→ 輸入`C:\Program Files\poppler\bin`（按您的實際安裝路徑修改）
-   - 點擊「確定」保存所有設定
-4. 重新啟動CMD或PowerShell，輸入`pdftoppm -v`檢查安裝是否成功
+1. **推薦方式**（預編譯版本）：
+   - 下載[Poppler for Windows](https://github.com/oschwartz10612/poppler-windows/releases/)
+   - 解壓到指定目錄（例如`C:\Program Files\poppler`）
+   - 將bin目錄添加到系統PATH環境變數
+2. **官方最新版本**（25.04，需手動編譯）：
+   - 下載[官方tar.xz版本](https://poppler.freedesktop.org/)
+   - 使用7-Zip解壓
+   - 需要手動編譯（需要MSYS2/MinGW開發環境）
+   - 不建議初學者使用此方法
 
 **快速檢查Poppler安裝**
 在命令提示符中運行：
@@ -135,10 +136,35 @@ brew install poppler
 檢查：`pdftoppm -v`
 
 **Linux用戶**
+預編譯版本：
 ```
 sudo apt-get install poppler-utils
 ```
+
+官方最新版本：
+```
+wget https://poppler.freedesktop.org/poppler-25.04.tar.xz
+tar -xf poppler-25.04.tar.xz
+cd poppler-25.04
+./configure
+make
+sudo make install
+```
 檢查：`pdftoppm -v`
+
+### 首次使用Python啟動腳本的注意事項
+
+當您第一次使用`run_toolkit.py`啟動程序時：
+
+1. 腳本會自動檢測並安裝多個必要依賴
+2. **重要**：安裝完成後，可能需要關閉並重新運行腳本才能正確載入新安裝的庫
+3. 如果遇到「ImportError」或相關錯誤，請：
+   ```
+   關閉命令窗口 → 重新運行 python run_toolkit.py
+   ```
+4. 在某些系統上，此重新啟動步驟是必須的，與Python的模塊載入機制有關
+
+這僅適用於首次安裝，後續使用時不會有此問題。
 
 ## 使用指南
 

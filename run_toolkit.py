@@ -106,13 +106,21 @@ def check_poppler():
         print_color("      若要使用「舊版壓縮」功能，請安裝Poppler:", "yellow")
         
         if platform.system() == "Windows":
-            print_color("      1. 從 https://github.com/oschwartz10612/poppler-windows/releases/ 下載", "yellow")
+            print_color("      推薦安裝方式:", "yellow")
+            print_color("      1. 從 https://github.com/oschwartz10612/poppler-windows/releases/ 下載預編譯版本", "yellow")
             print_color("      2. 解壓到指定目錄（如C:\\Program Files\\poppler）", "yellow")
             print_color("      3. 將bin目錄添加到系統PATH環境變數", "yellow")
+            print_color("\n      也可以使用官方最新版本(25.04)：", "cyan")
+            print_color("      1. 從 https://poppler.freedesktop.org/ 下載tar.xz格式", "cyan")
+            print_color("      2. 需使用7-Zip等工具解壓，並手動編譯（需要開發環境）", "cyan")
+            print_color("      3. 初學者建議使用預編譯版本，更簡便", "cyan")
         elif platform.system() == "Darwin":  # macOS
             print_color("      運行: brew install poppler", "yellow")
+            print_color("      或下載官方25.04版本: https://poppler.freedesktop.org/", "cyan")
         else:  # Linux
             print_color("      運行: sudo apt install poppler-utils", "yellow")
+            print_color("      或下載官方25.04版本: https://poppler.freedesktop.org/", "cyan")
+            print_color("      使用官方版本: tar -xf poppler-25.04.tar.xz && cd poppler-25.04 && ./configure && make && sudo make install", "cyan")
         
         print_color("      (如不安裝，「舊版壓縮」功能將無法使用，其他功能不受影響)", "yellow")
         return False
@@ -137,6 +145,13 @@ def install_dependencies():
         "pdf2image"
     ]
     
+    # 檢查是否已安裝所需套件
+    first_install = False
+    try:
+        import streamlit
+    except ImportError:
+        first_install = True
+    
     # 檢查是否存在requirements.txt
     if os.path.exists("requirements.txt"):
         print_color("      從requirements.txt安裝依賴項...", "blue")
@@ -153,6 +168,14 @@ def install_dependencies():
             run_command(f"{sys.executable} -m pip install {package}")
     
     print_color("      依賴項安裝完成", "green")
+    
+    # 如果是首次安裝，提示用戶可能需要重啟腳本
+    if first_install:
+        print_color("\n[重要提示] 由於這是首次安裝依賴，應用程序可能無法立即啟動", "yellow")
+        print_color("如果遇到錯誤，請關閉此窗口並重新運行 'python run_toolkit.py'", "yellow")
+        print_color("在某些系統上，需要重新啟動腳本才能正確載入新安裝的庫\n", "yellow")
+        time.sleep(3)  # 暫停幾秒確保用戶看到提示
+        
     return True
 
 def launch_app():
@@ -194,6 +217,11 @@ def launch_app():
 
 def main():
     """主函數"""
+    # 首次執行提示
+    print_color("第一次執行本啟動器可能需要安裝多個依賴項", "cyan")
+    print_color("如果在安裝後遇到錯誤，請關閉並重新運行此腳本", "cyan")
+    print_color("部分系統需要重新啟動腳本才能正確載入新安裝的庫\n", "cyan")
+    
     # 檢查環境
     python_ok = check_python()
     gs_ok = check_ghostscript()
@@ -229,6 +257,7 @@ def main():
         app_launched = launch_app()
         if app_launched:
             # 等待應用程序終止
+            print_color("應用已啟動！正確關閉方式: 按Ctrl+C或關閉瀏覽器後返回此窗口", "green")
             try:
                 while True:
                     time.sleep(1)
@@ -236,6 +265,7 @@ def main():
                 print_color("\n應用程序已關閉。", "blue")
     except Exception as e:
         print_color(f"[錯誤] {e}", "red")
+        print_color("如果是首次安裝依賴，請關閉並重新運行此腳本", "yellow")
     
     # 詢問是否重新啟動
     while True:
@@ -245,6 +275,7 @@ def main():
         elif choice == "N":
             print("\n重新啟動應用...\n")
             launch_app()
+            print_color("應用已啟動！正確關閉方式: 按Ctrl+C或關閉瀏覽器後返回此窗口", "green")
             try:
                 while True:
                     time.sleep(1)
