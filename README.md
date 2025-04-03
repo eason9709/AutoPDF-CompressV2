@@ -1,29 +1,26 @@
 # PDF工具箱 (PDF Toolkit)
 
 **PDF工具箱**是一個功能強大的多合一PDF處理應用程序，提供多種PDF處理功能，包括合併、分割、壓縮、優化、文字提取等。應用程序基於Python和Streamlit開發，擁有直觀的Web界面，適合各種PDF文檔處理需求。
-
+**本軟體使用AI協助開發**。
 
 ## 快速安裝指南
 ### 所需組件
 
 - [Python 3.9 ~ 3.13](https://www.python.org/downloads/) (必須)
+- 選擇適合自己的平台，並且下載安裝包，點兩下運行，記得勾選"加到PATH"等待安裝完畢。
 - [Ghostscript](https://ghostscript.com/releases/gsdnld.html) (推薦，用於高級壓縮)
-- [Poppler](https://github.com/oschwartz10612/poppler-windows/releases/download/v24.08.0-0/Release-24.08.0-0.zip) (可選，用於舊版壓縮)
+- 選擇適合自己的平台，並且下載安裝包，點兩下運行來安裝。
+- [Poppler](https://github.com/oschwartz10612/poppler-windows/releases/download/v24.08.0-0/Release-24.08.0-0.zip) (可選但不推薦，較為麻煩，用途等於舊版壓縮)
+- 解壓到指定目錄（例如`C:\Program Files\poppler`），並將bin目錄添加到系統PATH環境變數
 
 ### 手動安裝步驟
 
 1. 安裝Python：[下載Python](https://www.python.org/downloads/) (安裝時勾選「Add Python to PATH」)
 2. 解壓縮後，開啟命令提示符並進入該目錄
-3. 運行以下命令安裝依賴：
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. 啟動應用：
-   ```bash
-   streamlit run app.py
-   ```
+3. 透過python運行```run_toolkit.py```(即點兩下那一個python文件，應透過python自動打開)
+4. 由於技術限制，第一次啟動後需要再次重啟程式才能運行，敬請見諒。
 
-### macOS/Linux用戶
+### macOS/Linux用戶(無法驗證正確性，請小心服用)
 
 ```bash
 # 安裝必要組件
@@ -45,17 +42,7 @@ sudo apt install poppler-utils
 streamlit run app.py
 ```
 
-### Windows用戶 (推薦方式)
-
-1. 下載[PDF工具箱安裝包](https://github.com/yourusername/pdf-toolkit/releases/latest)
-2. 解壓縮後，可以使用以下兩種方式啟動：
-   - 方式一：雙擊運行 `run_pdf_toolkit.bat` (如果遇到亂碼或編碼問題，請使用方式二)
-   - 方式二：使用Python腳本啟動 - `python run_toolkit.py` (更穩定，支持所有編碼)
-3. 啟動腳本會自動檢查並安裝所需組件
-
-### 如何使用Python啟動腳本 (解決batch文件問題)
-
-如果您在使用bat文件時遇到編碼問題或"不是內部或外部命令"錯誤，請使用Python腳本啟動：
+### 如何使用Python啟動腳本 
 
 1. 打開命令提示符或PowerShell
 2. 切換到PDF工具箱目錄：`cd 路徑/到/pdf_toolkit`
@@ -108,18 +95,7 @@ Python啟動腳本的優勢：
 
 ### Poppler依賴
 
-舊版壓縮功能需要安裝Poppler庫：
-
-**Windows用戶**
-1. **推薦方式**（預編譯版本）：
-   - 下載[Poppler for Windows](https://github.com/oschwartz10612/poppler-windows/releases/)
-   - 解壓到指定目錄（例如`C:\Program Files\poppler`）
-   - 將bin目錄添加到系統PATH環境變數
-2. **官方最新版本**（25.04，需手動編譯）：
-   - 下載[官方tar.xz版本](https://poppler.freedesktop.org/)
-   - 使用7-Zip解壓
-   - 需要手動編譯（需要MSYS2/MinGW開發環境）
-   - 不建議初學者使用此方法
+舊版壓縮功能需要安裝Poppler庫，方法已於上方快速安裝指南說明。
 
 **快速檢查Poppler安裝**
 在命令提示符中運行：
