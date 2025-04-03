@@ -4,6 +4,56 @@
 
 ![PDF工具箱截圖](https://i.imgur.com/JY9kcG9.png)
 
+## 快速安裝指南
+
+### Windows用戶 (推薦方式)
+
+1. 下載[PDF工具箱安裝包](https://github.com/yourusername/pdf-toolkit/releases/latest)
+2. 解壓縮後，雙擊運行 `run_pdf_toolkit.bat`
+3. 腳本會自動檢查並安裝所需組件
+
+### 所需組件
+
+- [Python 3.8 ~ 3.13](https://www.python.org/downloads/) (必須)
+- [Ghostscript](https://ghostscript.com/releases/gsdnld.html) (推薦，用於高級壓縮)
+- [Poppler](https://github.com/oschwartz10612/poppler-windows/releases/) (可選，用於舊版壓縮)
+
+### 手動安裝步驟
+
+1. 安裝Python：[下載Python](https://www.python.org/downloads/) (安裝時勾選「Add Python to PATH」)
+2. 下載PDF工具箱：[下載最新版本](https://github.com/yourusername/pdf-toolkit/releases/latest)
+3. 解壓縮後，開啟命令提示符並進入該目錄
+4. 運行以下命令安裝依賴：
+   ```bash
+   pip install -r requirements.txt
+   ```
+5. 啟動應用：
+   ```bash
+   streamlit run app.py
+   ```
+
+### macOS/Linux用戶
+
+```bash
+# 安裝必要組件
+python -m pip install streamlit PyPDF2 pikepdf pillow reportlab pdf2image
+
+# 安裝Ghostscript (推薦)
+# macOS
+brew install ghostscript
+# Linux
+sudo apt install ghostscript
+
+# 安裝Poppler (可選)
+# macOS
+brew install poppler
+# Linux
+sudo apt install poppler-utils
+
+# 啟動應用
+streamlit run app.py
+```
+
 ## 主要功能
 
 - **PDF合併**: 將多個PDF文件合併為一個文檔
@@ -61,63 +111,6 @@ brew install poppler
 ```
 sudo apt-get install poppler-utils
 ```
-
-## 安裝指南
-
-### 方法一：使用啟動腳本（Windows用戶推薦）
-
-對於Windows用戶，我們提供了簡便的啟動腳本，可以自動檢查環境並啟動應用程序：
-
-1. 下載本應用程序壓縮包並解壓
-2. 運行 `run_pdf_toolkit.bat` 啟動腳本
-3. 腳本會檢查您的系統是否已安裝所需組件：
-   - Python 3.8 ~ 3.13
-   - Ghostscript (可選，用於高級PDF壓縮)
-   - Poppler (可選，用於舊版壓縮功能)
-   - 必要的Python套件
-4. 如果缺少任何組件，腳本會提供下載安裝指引
-5. 所有組件就緒後，應用程序將自動啟動
-
-### 方法二：手動安裝
-
-#### 必要條件
-
-- Python 3.8 ~ 3.13
-- Ghostscript (推薦，用於高級PDF壓縮)
-- Poppler (可選，用於舊版壓縮功能)
-
-#### 安裝步驟
-
-1. 克隆或下載本倉庫
-
-```bash
-git clone https://github.com/yourusername/pdf-toolkit.git
-cd pdf-toolkit
-```
-
-2. 安裝所需依賴項
-
-```bash
-pip install -r requirements.txt
-```
-
-3. (可選但推薦) 安裝Ghostscript
-   - Windows: [下載Ghostscript](https://ghostscript.com/releases/gsdnld.html)
-   - macOS: `brew install ghostscript`
-   - Linux: `sudo apt install ghostscript`
-
-4. (可選) 安裝Poppler
-   - Windows: [下載Poppler](https://github.com/oschwartz10612/poppler-windows/releases/)
-   - macOS: `brew install poppler`
-   - Linux: `sudo apt install poppler-utils`
-
-5. 啟動應用程序
-
-```bash
-streamlit run app.py
-```
-
-應用程序將在瀏覽器中自動打開，通常是 http://localhost:8501
 
 ## 使用指南
 
