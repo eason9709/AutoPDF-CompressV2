@@ -1,12 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+PDF工具箱啟動腳本 - 用於安裝依賴項並啟動應用程序
+包含解決網絡連接問題的增強參數
+"""
+
 import os
 import sys
 import subprocess
 import platform
 import time
 import webbrowser  # 添加webbrowser模塊引入
+import socket  # 添加socket模塊用於獲取網絡信息
 
 # 設置控制台為UTF-8編碼
 if platform.system() == "Windows":
@@ -211,7 +217,10 @@ def launch_app():
             "run", 
             "app.py", 
             "--server.headless=false", 
-            "--server.port=8501"
+            "--server.port=8501",
+            "--server.address=0.0.0.0",         # 允許從任何地址訪問
+            "--server.enableCORS=false",        # 禁用CORS限制
+            "--server.enableXsrfProtection=false" # 禁用XSRF保護
         ]
         
         # 如果是Windows，使用subprocess.Popen啟動，並設置creationflags以避免顯示命令窗口
@@ -231,13 +240,28 @@ def launch_app():
                 text=True
             )
         
-        # 嘗試直接打開瀏覽器
+        # 給Streamlit更多時間啟動 (增加等待時間)
+        time.sleep(5)
+        
+        # 嘗試直接打開瀏覽器 (只嘗試一次)
         try:
-            time.sleep(3)  # 給Streamlit更多時間啟動
+            print_color("嘗試打開瀏覽器...", "blue")
             webbrowser.open('http://localhost:8501')
         except Exception as e:
             print_color(f"無法自動打開瀏覽器: {e}", "yellow")
-            print_color("請手動打開瀏覽器並訪問 http://localhost:8501", "yellow")
+            print_color("請手動打開瀏覽器並訪問以下地址之一:", "yellow")
+            print_color("1. http://localhost:8501", "cyan")
+            print_color("2. http://127.0.0.1:8501", "cyan")
+            
+            # 嘗試獲取本機IP地址
+            try:
+                hostname = socket.gethostname()
+                ip_addresses = socket.gethostbyname_ex(hostname)[2]
+                for ip in ip_addresses:
+                    if not ip.startswith("127."):  # 排除localhost地址
+                        print_color(f"3. http://{ip}:8501", "cyan")
+            except:
+                pass
         
         # 如果沒有出錯，返回True
         return True
@@ -324,7 +348,7 @@ def main():
         app_launched = launch_app()
         if app_launched:
             # 等待應用程序終止
-            print_color("應用已啟動！正確關閉方式: 在此窗口同時按下Ctrl+C", "green")
+            print_color("應用已啟動！正確關閉方式: 按Ctrl+C或關閉瀏覽器後返回此窗口", "green")
             try:
                 while True:
                     time.sleep(1)
@@ -345,8 +369,42 @@ def main():
             # 在重新啟動前先清理進程
             kill_streamlit_processes()
             print("\n重新啟動應用...\n")
-            launch_app()
-            print_color("應用已啟動！正確關閉方式: 按Ctrl+C或關閉瀏覽器後返回此窗口", "green")
+            # 重啟但不再嘗試打開瀏覽器，避免多個瀏覽器窗口
+            print_color("應用將在原瀏覽器窗口重新加載，請勿關閉現有瀏覽器窗口", "yellow")
+            
+            # 修改啟動命令，不自動打開瀏覽器
+            cmd = [
+                sys.executable, 
+                "-m", 
+                "streamlit", 
+                "run", 
+                "app.py", 
+                "--server.headless=true",  # 不自動打開瀏覽器 
+                "--server.port=8501",
+                "--server.address=0.0.0.0",
+                "--server.enableCORS=false",
+                "--server.enableXsrfProtection=false"
+            ]
+            
+            # 啟動但不打開新瀏覽器
+            if platform.system() == "Windows":
+                process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+            else:
+                process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+            
+            print_color("應用已重新啟動！請刷新瀏覽器窗口", "green")
+            print_color("正確關閉方式: 按Ctrl+C或關閉瀏覽器後返回此窗口", "green")
             try:
                 while True:
                     time.sleep(1)
