@@ -45,6 +45,28 @@ sudo apt install poppler-utils
 streamlit run app.py
 ```
 
+### Windows用戶 (推薦方式)
+
+1. 下載[PDF工具箱安裝包](https://github.com/yourusername/pdf-toolkit/releases/latest)
+2. 解壓縮後，可以使用以下兩種方式啟動：
+   - 方式一：雙擊運行 `run_pdf_toolkit.bat` (如果遇到亂碼或編碼問題，請使用方式二)
+   - 方式二：使用Python腳本啟動 - `python run_toolkit.py` (更穩定，支持所有編碼)
+3. 啟動腳本會自動檢查並安裝所需組件
+
+### 如何使用Python啟動腳本 (解決batch文件問題)
+
+如果您在使用bat文件時遇到編碼問題或"不是內部或外部命令"錯誤，請使用Python腳本啟動：
+
+1. 打開命令提示符或PowerShell
+2. 切換到PDF工具箱目錄：`cd 路徑/到/pdf_toolkit`
+3. 運行Python腳本：`python run_toolkit.py`
+
+Python啟動腳本的優勢：
+- 不會出現中文亂碼問題
+- 跨平台兼容（Windows/Mac/Linux）
+- 自動檢測並安裝所有依賴
+- 提供彩色終端輸出和更詳細的錯誤信息
+
 ## 主要功能
 
 - **PDF合併**: 將多個PDF文件合併為一個文檔
