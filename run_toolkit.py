@@ -6,6 +6,7 @@ import sys
 import subprocess
 import platform
 import time
+import webbrowser  # 添加webbrowser模塊引入
 
 # 設置控制台為UTF-8編碼
 if platform.system() == "Windows":
@@ -191,23 +192,56 @@ def launch_app():
     print_color("\n[正在啟動應用程序，請稍候...]", "blue")
     print_color("(按Ctrl+C可終止應用程序)\n", "yellow")
     
+    # 確保在啟動前沒有正在運行的streamlit進程
+    # 這些代碼已經移到kill_streamlit_processes函數中
+    
     try:
         # 嘗試導入streamlit以確保已安裝
         import streamlit
         
-        # 啟動應用
-        process = subprocess.Popen(
-            [sys.executable, "-m", "streamlit", "run", "app.py"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
+        # 設置環境變數以確保自動打開瀏覽器
+        os.environ["STREAMLIT_SERVER_HEADLESS"] = "false"
+        os.environ["STREAMLIT_BROWSER_GATHER_USAGE_STATS"] = "false"
         
-        # 等待應用啟動
-        time.sleep(2)
+        # 啟動應用，使用顯式的server.headless=false參數
+        cmd = [
+            sys.executable, 
+            "-m", 
+            "streamlit", 
+            "run", 
+            "app.py", 
+            "--server.headless=false", 
+            "--server.port=8501"
+        ]
+        
+        # 如果是Windows，使用subprocess.Popen啟動，並設置creationflags以避免顯示命令窗口
+        if platform.system() == "Windows":
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW  # 避免顯示命令窗口
+            )
+        else:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+        
+        # 嘗試直接打開瀏覽器
+        try:
+            time.sleep(3)  # 給Streamlit更多時間啟動
+            webbrowser.open('http://localhost:8501')
+        except Exception as e:
+            print_color(f"無法自動打開瀏覽器: {e}", "yellow")
+            print_color("請手動打開瀏覽器並訪問 http://localhost:8501", "yellow")
         
         # 如果沒有出錯，返回True
         return True
+        
     except ImportError:
         print_color("[錯誤] 未安裝streamlit，請重新運行安裝腳本", "red")
         return False
@@ -215,8 +249,41 @@ def launch_app():
         print_color(f"[錯誤] 啟動應用時出錯: {e}", "red")
         return False
 
+def kill_streamlit_processes():
+    """終止所有與streamlit相關的進程"""
+    try:
+        if platform.system() == "Windows":
+            print_color("正在清理Streamlit進程...", "blue")
+            # 終止streamlit.exe進程
+            run_command("taskkill /f /im streamlit.exe >nul 2>&1", True)
+            # 使用更安全的方式尋找並終止Python中運行的streamlit進程
+            run_command('wmic process where "commandline like \'%streamlit%\'" call terminate >nul 2>&1', True)
+            # 釋放8501端口
+            run_command('netstat -ano | find ":8501" > temp_port.txt', True)
+            if os.path.exists("temp_port.txt"):
+                with open("temp_port.txt", "r") as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        parts = line.strip().split()
+                        if len(parts) >= 5:
+                            pid = parts[4]
+                            run_command(f"taskkill /f /pid {pid} >nul 2>&1", True)
+                os.remove("temp_port.txt")
+        else:
+            # Unix系統的進程清理
+            run_command("pkill -f streamlit", True)
+            run_command("lsof -ti:8501 | xargs kill -9 2>/dev/null", True)
+    except Exception as e:
+        print_color(f"清理進程時出錯: {e}", "yellow")
+        
+    # 等待確保進程已終止
+    time.sleep(2)
+
 def main():
     """主函數"""
+    # 在啟動前清理可能存在的streamlit進程
+    kill_streamlit_processes()
+    
     # 首次執行提示
     print_color("第一次執行本啟動器可能需要安裝多個依賴項", "cyan")
     print_color("如果在安裝後遇到錯誤，請關閉並重新運行此腳本", "cyan")
@@ -257,12 +324,14 @@ def main():
         app_launched = launch_app()
         if app_launched:
             # 等待應用程序終止
-            print_color("應用已啟動！正確關閉方式: 按Ctrl+C或關閉瀏覽器後返回此窗口", "green")
+            print_color("應用已啟動！正確關閉方式: 在此窗口同時按下Ctrl+C", "green")
             try:
                 while True:
                     time.sleep(1)
             except KeyboardInterrupt:
                 print_color("\n應用程序已關閉。", "blue")
+                # 確保清理所有相關進程
+                kill_streamlit_processes()
     except Exception as e:
         print_color(f"[錯誤] {e}", "red")
         print_color("如果是首次安裝依賴，請關閉並重新運行此腳本", "yellow")
@@ -273,6 +342,8 @@ def main():
         if choice == "Y":
             break
         elif choice == "N":
+            # 在重新啟動前先清理進程
+            kill_streamlit_processes()
             print("\n重新啟動應用...\n")
             launch_app()
             print_color("應用已啟動！正確關閉方式: 按Ctrl+C或關閉瀏覽器後返回此窗口", "green")
@@ -281,9 +352,13 @@ def main():
                     time.sleep(1)
             except KeyboardInterrupt:
                 print_color("\n應用程序已關閉。", "blue")
+                # 確保清理所有相關進程
+                kill_streamlit_processes()
         else:
             print("請輸入Y或N")
     
+    # 退出前確保所有streamlit進程已終止
+    kill_streamlit_processes()
     print_color("感謝使用PDF工具箱！", "green")
     input("按Enter鍵退出...")
 
