@@ -8,7 +8,7 @@
 
 - [Python 3.9 ~ 3.13](https://www.python.org/downloads/) (必須)
 - [Ghostscript](https://ghostscript.com/releases/gsdnld.html) (推薦，用於高級壓縮)
-- [Poppler](https://poppler.freedesktop.org/poppler-25.04.0.tar.xz)) (可選，用於舊版壓縮)
+- [Poppler](https://poppler.freedesktop.org/poppler-25.04.0.tar.xz) (可選，用於舊版壓縮)
 
 ### 手動安裝步驟
 
