@@ -5,29 +5,51 @@ from pdfminer.high_level import extract_text, extract_pages
 from pdfminer.layout import LTTextContainer
 import base64
 from io import BytesIO
+import platform
+import sys
 
 def pdf_extract_text_page():
     st.header("📝 PDF文字提取")
     st.write("從PDF文件中提取文本內容")
     
     # 嘗試找到Poppler路徑（用於OCR模式）
-    poppler_paths = [
-        "/usr/bin",
-        "/usr/local/bin",
-        "/usr/lib/x86_64-linux-gnu/poppler",
-        "/usr/lib/poppler"
-    ]
+    poppler_paths = []
+    
+    # 根據不同操作系統設置可能的路徑
+    if platform.system() == "Windows":
+        # Windows可能的Poppler路徑
+        poppler_paths = [
+            os.path.join(os.environ.get('PROGRAMFILES', 'C:\\Program Files'), 'poppler', 'bin'),
+            os.path.join(os.environ.get('PROGRAMFILES(X86)', 'C:\\Program Files (x86)'), 'poppler', 'bin'),
+            os.path.expanduser('~\\poppler\\bin'),
+            os.path.abspath('poppler\\bin')
+        ]
+    else:
+        # Linux/macOS可能的Poppler路徑
+        poppler_paths = [
+            "/usr/bin",
+            "/usr/local/bin",
+            "/usr/lib/x86_64-linux-gnu/poppler",
+            "/usr/lib/poppler"
+        ]
     
     poppler_path = None
-    if st.checkbox("使用OCR識別掃描文檔中的文字（需要Tesseract）", value=False):
+    use_ocr = st.checkbox("使用OCR識別掃描文檔中的文字（需要Tesseract）", value=False)
+    
+    if use_ocr:
         for path in poppler_paths:
-            if os.path.exists(os.path.join(path, "pdftoppm")) or os.path.exists(path + "/pdftoppm"):
+            # 檢查pdftoppm是否存在於路徑中
+            pdftoppm_path = os.path.join(path, "pdftoppm")
+            if platform.system() == "Windows":
+                pdftoppm_path += ".exe"
+            
+            if os.path.exists(pdftoppm_path):
                 poppler_path = path
                 st.success(f"找到Poppler在: {poppler_path}")
                 break
         
-        # 如果在標準路徑中找不到，嘗試用which命令查找
-        if poppler_path is None:
+        # 如果在標準路徑中找不到，嘗試用which命令查找 (僅限非Windows系統)
+        if poppler_path is None and platform.system() != "Windows":
             try:
                 import subprocess
                 result = subprocess.run(["which", "pdftoppm"], capture_output=True, text=True)
@@ -37,6 +59,39 @@ def pdf_extract_text_page():
                     st.success(f"找到Poppler在: {poppler_path}")
             except Exception as e:
                 st.warning(f"查找pdftoppm路徑時出錯: {str(e)}")
+        
+        # 在Streamlit Cloud (Linux)環境中的額外路徑檢查
+        if poppler_path is None and platform.system() != "Windows":
+            try:
+                import glob
+                # 搜索常見的Linux安裝路徑
+                possible_paths = glob.glob("/usr/lib/*/pdftoppm") + glob.glob("/usr/bin/pdftoppm") 
+                if possible_paths:
+                    pdftoppm_path = possible_paths[0]
+                    poppler_path = os.path.dirname(pdftoppm_path)
+                    st.success(f"找到Poppler在: {poppler_path}")
+            except Exception as e:
+                st.warning(f"搜索pdftoppm時出錯: {str(e)}")
+        
+        # 檢查Tesseract是否安裝
+        try:
+            import pytesseract
+            # 如果是Windows，嘗試設置Tesseract路徑
+            if platform.system() == "Windows":
+                tesseract_paths = [
+                    os.path.join(os.environ.get('PROGRAMFILES', 'C:\\Program Files'), 'Tesseract-OCR', 'tesseract.exe'),
+                    os.path.join(os.environ.get('PROGRAMFILES(X86)', 'C:\\Program Files (x86)'), 'Tesseract-OCR', 'tesseract.exe'),
+                    os.path.expanduser('~\\Tesseract-OCR\\tesseract.exe')
+                ]
+                
+                for path in tesseract_paths:
+                    if os.path.exists(path):
+                        pytesseract.pytesseract.tesseract_cmd = path
+                        st.success(f"找到Tesseract在: {path}")
+                        break
+        except ImportError:
+            st.error("未安裝pytesseract。請使用 `pip install pytesseract` 安裝。")
+            use_ocr = False
     
     # 文件上傳
     uploaded_file = st.file_uploader("選擇PDF文件", type="pdf")
@@ -85,7 +140,16 @@ def pdf_extract_text_page():
                                 # 從圖像中提取文本
                                 text = ""
                                 for i, image in enumerate(images):
-                                    page_text = pytesseract.image_to_string(image, lang='chi_tra+eng')
+                                    # 嘗試使用簡體中文和繁體中文
+                                    try:
+                                        page_text = pytesseract.image_to_string(image, lang='chi_tra+eng')
+                                    except:
+                                        try:
+                                            page_text = pytesseract.image_to_string(image, lang='chi_sim+eng')
+                                        except:
+                                            # 如果中文語言包不可用，退回到英文
+                                            page_text = pytesseract.image_to_string(image)
+                                    
                                     text += f"===== 第 {i+1} 頁 =====\n{page_text}\n\n"
                             else:
                                 # 使用pdfminer提取文本
@@ -161,7 +225,17 @@ def pdf_extract_text_page():
                                     text = ""
                                     for i, image in enumerate(images):
                                         page_num = pages_to_extract[i] if i < len(pages_to_extract) else i + min(pages_to_extract)
-                                        page_text = pytesseract.image_to_string(image, lang='chi_tra+eng')
+                                        
+                                        # 嘗試使用簡體中文和繁體中文
+                                        try:
+                                            page_text = pytesseract.image_to_string(image, lang='chi_tra+eng')
+                                        except:
+                                            try:
+                                                page_text = pytesseract.image_to_string(image, lang='chi_sim+eng')
+                                            except:
+                                                # 如果中文語言包不可用，退回到英文
+                                                page_text = pytesseract.image_to_string(image)
+                                                
                                         text += f"===== 第 {page_num} 頁 =====\n{page_text}\n\n"
                                 else:
                                     # 使用pdfminer提取特定頁面文本
