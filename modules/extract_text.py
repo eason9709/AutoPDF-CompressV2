@@ -10,6 +10,34 @@ def pdf_extract_text_page():
     st.header("📝 PDF文字提取")
     st.write("從PDF文件中提取文本內容")
     
+    # 嘗試找到Poppler路徑（用於OCR模式）
+    poppler_paths = [
+        "/usr/bin",
+        "/usr/local/bin",
+        "/usr/lib/x86_64-linux-gnu/poppler",
+        "/usr/lib/poppler"
+    ]
+    
+    poppler_path = None
+    if st.checkbox("使用OCR識別掃描文檔中的文字（需要Tesseract）", value=False):
+        for path in poppler_paths:
+            if os.path.exists(os.path.join(path, "pdftoppm")) or os.path.exists(path + "/pdftoppm"):
+                poppler_path = path
+                st.success(f"找到Poppler在: {poppler_path}")
+                break
+        
+        # 如果在標準路徑中找不到，嘗試用which命令查找
+        if poppler_path is None:
+            try:
+                import subprocess
+                result = subprocess.run(["which", "pdftoppm"], capture_output=True, text=True)
+                if result.returncode == 0 and result.stdout.strip():
+                    pdftoppm_path = result.stdout.strip()
+                    poppler_path = os.path.dirname(pdftoppm_path)
+                    st.success(f"找到Poppler在: {poppler_path}")
+            except Exception as e:
+                st.warning(f"查找pdftoppm路徑時出錯: {str(e)}")
+    
     # 文件上傳
     uploaded_file = st.file_uploader("選擇PDF文件", type="pdf")
     
@@ -38,7 +66,7 @@ def pdf_extract_text_page():
             )
             
             # 提供檢測OCR選項
-            use_ocr = st.checkbox("使用OCR識別掃描文檔中的文字（需要Tesseract）", value=False)
+            use_ocr = st.checkbox("使用OCR識別掃描文檔中的文字（需要Tesseract）", value=False, key="ocr_checkbox")
             
             if extraction_mode == "提取所有文本":
                 if st.button("提取文本"):
@@ -51,8 +79,8 @@ def pdf_extract_text_page():
                                 import pytesseract
                                 from pdf2image import convert_from_path
                                 
-                                # 將PDF轉換為圖像
-                                images = convert_from_path(temp_file)
+                                # 將PDF轉換為圖像，使用找到的poppler_path
+                                images = convert_from_path(temp_file, poppler_path=poppler_path)
                                 
                                 # 從圖像中提取文本
                                 text = ""
@@ -126,8 +154,8 @@ def pdf_extract_text_page():
                                     import pytesseract
                                     from pdf2image import convert_from_path
                                     
-                                    # 將PDF轉換為圖像
-                                    images = convert_from_path(temp_file, first_page=min(pages_to_extract), last_page=max(pages_to_extract))
+                                    # 將PDF轉換為圖像，使用找到的poppler_path
+                                    images = convert_from_path(temp_file, first_page=min(pages_to_extract), last_page=max(pages_to_extract), poppler_path=poppler_path)
                                     
                                     # 從圖像中提取文本
                                     text = ""

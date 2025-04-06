@@ -18,7 +18,34 @@ def legacy_compress_page():
     except Exception:
         poppler_installed = False
     
-    if not poppler_installed:
+    # 嘗試找到Poppler路徑
+    poppler_paths = [
+        "/usr/bin",
+        "/usr/local/bin",
+        "/usr/lib/x86_64-linux-gnu/poppler",
+        "/usr/lib/poppler"
+    ]
+    
+    poppler_path = None
+    for path in poppler_paths:
+        if os.path.exists(os.path.join(path, "pdftoppm")) or os.path.exists(path + "/pdftoppm"):
+            poppler_path = path
+            st.success(f"找到Poppler在: {poppler_path}")
+            break
+    
+    # 如果在標準路徑中找不到，嘗試用which命令查找
+    if poppler_path is None:
+        try:
+            import subprocess
+            result = subprocess.run(["which", "pdftoppm"], capture_output=True, text=True)
+            if result.returncode == 0 and result.stdout.strip():
+                pdftoppm_path = result.stdout.strip()
+                poppler_path = os.path.dirname(pdftoppm_path)
+                st.success(f"找到Poppler在: {poppler_path}")
+        except Exception as e:
+            st.warning(f"查找pdftoppm路徑時出錯: {str(e)}")
+    
+    if not poppler_installed and poppler_path is None:
         st.error("此功能需要安裝Poppler! 請參考以下說明進行安裝：")
         
         with st.expander("Poppler安裝指南", expanded=True):
@@ -103,8 +130,8 @@ def legacy_compress_page():
                                 attempt += 1
                                 st.write(f"嘗試 #{attempt}，使用DPI: {current_dpi}")
                                 
-                                # 轉換PDF為圖像
-                                images = convert_from_path(input_file, dpi=current_dpi)
+                                # 轉換PDF為圖像，使用找到的poppler_path
+                                images = convert_from_path(input_file, dpi=current_dpi, poppler_path=poppler_path)
                                 jpg_files = []
                                 
                                 # 保存為臨時JPG文件
@@ -167,7 +194,7 @@ def legacy_compress_page():
                                 current_dpi = last_success_dpi
                                 
                                 # 重新生成一次PDF以確保大小正確
-                                images = convert_from_path(input_file, dpi=current_dpi)
+                                images = convert_from_path(input_file, dpi=current_dpi, poppler_path=poppler_path)
                                 jpg_files = []
                                 for i, image in enumerate(images):
                                     jpg_path = os.path.join(tmpdirname, f"temp_page_{i}.jpg")
@@ -189,8 +216,8 @@ def legacy_compress_page():
                                 output_size = os.path.getsize(output_path) / 1024  # KB
                         else:
                             # 標準模式
-                            # 轉換PDF為圖像
-                            images = convert_from_path(input_file, dpi=dpi)
+                            # 轉換PDF為圖像，使用找到的poppler_path
+                            images = convert_from_path(input_file, dpi=dpi, poppler_path=poppler_path)
                             jpg_files = []
                             
                             # 保存為臨時JPG文件

@@ -284,3 +284,28 @@ PDF工具箱使用多種Python庫處理PDF文件：
 ---
 
 **PDF工具箱** - 您的PDF處理一站式解決方案 
+
+## 部署到Streamlit Cloud
+
+如果您希望將應用程序部署到Streamlit Cloud上，請遵循以下步驟：
+
+1. 確保您有一個GitHub帳戶並且已經將項目推送到您的GitHub倉庫
+2. 確保您的倉庫中包含以下文件：
+   - `requirements.txt`：包含Python依賴項
+   - `packages.txt`：包含系統依賴項，如ghostscript和poppler-utils
+   - `app.py`：您的Streamlit應用程序主文件
+
+### packages.txt文件
+在Streamlit Cloud環境中安裝系統級別依賴項需要在項目根目錄中創建`packages.txt`文件。這個文件應該包含需要通過apt-get安裝的包名稱，每行一個。例如：
+
+```
+ghostscript
+poppler-utils
+```
+
+這樣，Streamlit Cloud會在部署時自動安裝這些系統依賴項。
+
+### 注意事項
+- 在Streamlit Cloud中，可能需要在代碼中明確指定Poppler和Ghostscript的路徑
+- 部署後，如果發現功能無法正常使用，請檢查日誌以獲取詳細錯誤信息
+- 某些高級功能可能受到雲環境限制，請相應調整您的代碼
