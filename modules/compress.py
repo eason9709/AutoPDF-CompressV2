@@ -297,6 +297,9 @@ def pdf_compress_page():
                             # 計算壓縮率
                             compression_ratio = ((file_size_mb - compressed_size_mb) / file_size_mb) * 100
                             
+                            # 確保壓縮率是正數
+                            compression_ratio = max(0, compression_ratio)
+                            
                             # 輸出結果展示
                             col1, col2, col3 = st.columns(3)
                             with col1:
@@ -306,8 +309,8 @@ def pdf_compress_page():
                             with col3:
                                 st.metric("節省空間", f"{compression_ratio:.1f}%", f"-{file_size_mb - compressed_size_mb:.2f} MB")
                             
-                            # 進度條顯示壓縮比例
-                            st.progress(min(compression_ratio / 100, 1.0))
+                            # 進度條顯示壓縮比例（確保值在0到1之間）
+                            st.progress(max(0, min(compression_ratio / 100, 1.0)))
                             
                             # 顯示壓縮信息
                             if compression_ratio > 0:
@@ -357,9 +360,10 @@ def pdf_compress_page():
         st.info("請先上傳PDF文件進行處理")
         
         # 檢查Ghostscript是否存在
-        gs_exists = os.path.exists(GHOSTSCRIPT_PATH) 
-        if gs_exists:
-            st.success(f"已檢測到Ghostscript: {GHOSTSCRIPT_PATH}")
+        if GHOSTSCRIPT_AVAILABLE:
+            st.success(f"✅ 已檢測到Ghostscript: {GHOSTSCRIPT_PATH}")
+            if GS_VERSION:
+                st.info(f"Ghostscript 版本: {GS_VERSION}")
         else:
             st.warning("未檢測到Ghostscript，壓縮功能可能受限")
             st.info("建議安裝Ghostscript以獲得最佳壓縮效果")
@@ -407,6 +411,9 @@ def target_size_compression(input_file, temp_dir, target_size_mb, max_attempts, 
     # 根據頁數和目標壓縮率確定DPI值範圍
     file_size_mb = os.path.getsize(input_file) / (1024 * 1024)
     compression_ratio = ((file_size_mb - target_size_mb) / file_size_mb) * 100
+    
+    # 確保壓縮率是正數
+    compression_ratio = max(0, compression_ratio)
     
     # 根據目標壓縮率選擇合適的DPI範圍
     if compression_ratio > 80:  # 極度壓縮
@@ -541,9 +548,17 @@ def process_pdf(input_file, output_file, dpi=120, image_quality="/default", colo
                 gs_cmd.append("-dDetectDuplicateImages=true")
                 gs_cmd.append("-dCompressFonts=true")
             
+            # 改進字體處理方式，特別是對中文字體的處理
             if optimize_fonts:
-                gs_cmd.append("-dEmbedAllFonts=false")
+                # 字體優化但保留嵌入，確保中文正確顯示
+                gs_cmd.append("-dEmbedAllFonts=true")  # 修改為true確保嵌入所有字體
                 gs_cmd.append("-dSubsetFonts=true")
+                gs_cmd.append("-dPrinted=false")  # 優化用於螢幕顯示不是打印
+                gs_cmd.append("-dMaxSubsetPct=100")  # 允許完整子集
+            else:
+                # 如果不優化字體，確保完整嵌入所有字體
+                gs_cmd.append("-dEmbedAllFonts=true")
+                gs_cmd.append("-dSubsetFonts=false")
             
             # 添加輸出和輸入文件，放在命令末尾
             gs_cmd.append(f"-sOutputFile={output_path}")
