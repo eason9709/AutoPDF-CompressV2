@@ -24,6 +24,28 @@ def pdf_compress_page():
     st.header("🔎 PDF壓縮與優化")
     st.write("壓縮和優化PDF文件，減小大小並提升性能")
     
+    # 顯示Ghostscript檢測狀態
+    gs_status = st.sidebar.container()
+    with gs_status:
+        st.subheader("系統診斷信息")
+        if GHOSTSCRIPT_AVAILABLE:
+            st.success(f"✅ Ghostscript 已檢測到: {GHOSTSCRIPT_PATH}")
+            try:
+                result = subprocess.run([GHOSTSCRIPT_PATH, "--version"], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    st.info(f"Ghostscript 版本: {result.stdout.strip()}")
+            except Exception as e:
+                st.warning(f"無法獲取 Ghostscript 版本信息: {str(e)}")
+        else:
+            st.error("❌ Ghostscript 未檢測到，這可能會影響壓縮功能")
+            st.info("系統路徑變量 PATH: " + os.environ.get('PATH', '未設置'))
+            st.markdown("""
+            **安裝 Ghostscript:**
+            - Windows: 下載並安裝 [Ghostscript](https://ghostscript.com/releases/gsdnld.html)
+            - macOS: 使用 Homebrew 安裝 `brew install ghostscript`
+            - Linux: 使用包管理器安裝 `apt-get install ghostscript` 或 `yum install ghostscript`
+            """)
+    
     # 文件上傳
     uploaded_file = st.file_uploader("選擇PDF文件", type="pdf")
     

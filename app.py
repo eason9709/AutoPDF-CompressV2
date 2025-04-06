@@ -8,6 +8,137 @@ from io import BytesIO
 import sys
 sys.path.append(os.path.abspath('.'))
 
+# 檢查URL參數，啟用診斷模式
+if "debug" in st.query_params:
+    import subprocess
+    import platform
+    
+    st.title("PDF工具箱系統診斷")
+    
+    # 系統信息
+    st.header("系統信息")
+    st.code(f"操作系統: {platform.system()} {platform.version()}")
+    st.code(f"Python版本: {sys.version}")
+    st.code(f"工作目錄: {os.getcwd()}")
+    st.code(f"PATH環境變量: {os.environ.get('PATH', '未設置')}")
+    
+    # 檢查Ghostscript
+    gs_path_found = False
+    st.header("Ghostscript檢測")
+    
+    # 嘗試運行gs命令
+    try:
+        result = subprocess.run(["gs", "--version"], capture_output=True, text=True)
+        if result.returncode == 0:
+            st.success(f"Ghostscript版本: {result.stdout.strip()}")
+            gs_path_found = True
+        else:
+            st.error(f"Ghostscript測試失敗: {result.stderr}")
+    except Exception as e:
+        st.error(f"執行gs命令出錯: {str(e)}")
+    
+    # 查找可能的gs路徑
+    if not gs_path_found:
+        st.write("搜索可能的Ghostscript路徑...")
+        try:
+            find_cmd = "find /usr -name gs -type f 2>/dev/null | head -5"
+            result = subprocess.run(find_cmd, shell=True, capture_output=True, text=True)
+            if result.stdout:
+                st.code(f"找到以下可能的Ghostscript路徑:\n{result.stdout}")
+            else:
+                st.warning("未找到gs執行檔")
+                
+            # 嘗試其他可能的位置
+            alt_paths = [
+                "/usr/bin/gs",
+                "/usr/local/bin/gs",
+                "/bin/gs"
+            ]
+            
+            for path in alt_paths:
+                if os.path.exists(path):
+                    st.success(f"找到Ghostscript在: {path}")
+                    # 測試這個路徑
+                    try:
+                        result = subprocess.run([path, "--version"], capture_output=True, text=True)
+                        if result.returncode == 0:
+                            st.success(f"路徑 {path} 的Ghostscript版本: {result.stdout.strip()}")
+                            gs_path_found = True
+                    except Exception as e:
+                        st.error(f"測試 {path} 時出錯: {str(e)}")
+        except Exception as e:
+            st.error(f"搜索Ghostscript路徑出錯: {str(e)}")
+    
+    # 檢查Poppler
+    st.header("Poppler檢測")
+    pdftoppm_found = False
+    
+    try:
+        result = subprocess.run(["which", "pdftoppm"], capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            pdftoppm_path = result.stdout.strip()
+            st.success(f"找到Poppler (pdftoppm) 在: {pdftoppm_path}")
+            pdftoppm_found = True
+            
+            # 檢查版本
+            ver_result = subprocess.run(["pdftoppm", "-v"], capture_output=True, text=True)
+            if ver_result.stderr:  # pdftoppm通常將版本信息輸出到stderr
+                st.success(f"Poppler版本: {ver_result.stderr.strip()}")
+    except Exception as e:
+        st.error(f"檢查pdftoppm時出錯: {str(e)}")
+    
+    if not pdftoppm_found:
+        st.write("搜索可能的Poppler (pdftoppm) 路徑...")
+        try:
+            find_cmd = "find /usr -name pdftoppm -type f 2>/dev/null | head -5"
+            result = subprocess.run(find_cmd, shell=True, capture_output=True, text=True)
+            if result.stdout:
+                st.code(f"找到以下可能的pdftoppm路徑:\n{result.stdout}")
+        except Exception as e:
+            st.error(f"搜索pdftoppm路徑出錯: {str(e)}")
+    
+    # 測試指令
+    st.header("命令執行測試")
+    
+    # 測試Ghostscript基本功能
+    if gs_path_found:
+        st.subheader("Ghostscript基本功能測試")
+        try:
+            test_cmd = "gs -dNOPAUSE -dBATCH -sDEVICE=nullpage -c quit"
+            result = subprocess.run(test_cmd, shell=True, capture_output=True, text=True)
+            if result.returncode == 0:
+                st.success("Ghostscript基本功能測試成功")
+            else:
+                st.error(f"Ghostscript功能測試失敗: {result.stderr}")
+        except Exception as e:
+            st.error(f"執行Ghostscript測試命令出錯: {str(e)}")
+    
+    # 測試Poppler基本功能
+    if pdftoppm_found:
+        st.subheader("Poppler基本功能測試")
+        st.code("Poppler已安裝並可用")
+        
+    # 命令執行工具
+    st.header("命令執行工具")
+    cmd = st.text_input("輸入要執行的命令")
+    if st.button("執行"):
+        if cmd:
+            try:
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                st.code(f"退出碼: {result.returncode}")
+                if result.stdout:
+                    st.subheader("標準輸出")
+                    st.code(result.stdout)
+                if result.stderr:
+                    st.subheader("標準錯誤")
+                    st.code(result.stderr)
+            except Exception as e:
+                st.error(f"執行命令時出錯: {str(e)}")
+    
+    # 退出診斷模式
+    st.info("診斷完成。要回到主應用，請移除URL中的'?debug=1'參數。")
+    st.stop()
+
 # 引入功能模塊
 try:
     from modules.merge import pdf_merge_page
