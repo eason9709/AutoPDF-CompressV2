@@ -9,16 +9,49 @@ import pikepdf
 from pikepdf import Pdf
 import time
 
-# 設置Ghostscript路徑
-GHOSTSCRIPT_PATH = os.path.join(os.getcwd(), "gs10.05.0", "bin", "gswin64c.exe")
-if not os.path.exists(GHOSTSCRIPT_PATH):
-    GHOSTSCRIPT_PATH = os.path.join(os.getcwd(), "gs10.05.0", "bin", "gswin32c.exe")
-    if not os.path.exists(GHOSTSCRIPT_PATH):
-        # 嘗試在系統路徑中查找
-        GHOSTSCRIPT_PATH = shutil.which("gswin64c") or shutil.which("gswin32c") or "gs"
+# 檢查Ghostscript是否可用的函數（適用於所有平台，尤其是Linux）
+def check_ghostscript():
+    try:
+        # 直接嘗試執行gs命令
+        result = subprocess.run(["gs", "--version"], capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            return True, "gs", result.stdout.strip()
+        
+        # 如果直接執行失敗，嘗試其他可能的路徑
+        for cmd in ["gswin64c", "gswin32c"]:
+            try:
+                result = subprocess.run([cmd, "--version"], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    return True, cmd, result.stdout.strip()
+            except:
+                pass
+        
+        return False, None, None
+    except Exception as e:
+        return False, None, str(e)
 
-# 檢查Ghostscript是否可用
-GHOSTSCRIPT_AVAILABLE = os.path.exists(GHOSTSCRIPT_PATH)
+# 設置Ghostscript路徑
+# 首先嘗試命令行檢測
+GS_AVAILABLE, GS_CMD, GS_VERSION = check_ghostscript()
+
+if GS_AVAILABLE:
+    GHOSTSCRIPT_PATH = GS_CMD
+    GHOSTSCRIPT_AVAILABLE = True
+else:
+    # 如果命令行檢測失敗，回退到傳統路徑檢測
+    GHOSTSCRIPT_PATH = os.path.join(os.getcwd(), "gs10.05.0", "bin", "gswin64c.exe")
+    if not os.path.exists(GHOSTSCRIPT_PATH):
+        GHOSTSCRIPT_PATH = os.path.join(os.getcwd(), "gs10.05.0", "bin", "gswin32c.exe")
+        if not os.path.exists(GHOSTSCRIPT_PATH):
+            # 嘗試在系統路徑中查找
+            GHOSTSCRIPT_PATH = shutil.which("gswin64c") or shutil.which("gswin32c") or shutil.which("gs") or "gs"
+            
+    # 最後檢查路徑是否可用
+    try:
+        result = subprocess.run([GHOSTSCRIPT_PATH, "--version"], capture_output=True, text=True, timeout=5)
+        GHOSTSCRIPT_AVAILABLE = result.returncode == 0
+    except:
+        GHOSTSCRIPT_AVAILABLE = False
 
 def pdf_compress_page():
     st.header("🔎 PDF壓縮與優化")
@@ -30,12 +63,15 @@ def pdf_compress_page():
         st.subheader("系統診斷信息")
         if GHOSTSCRIPT_AVAILABLE:
             st.success(f"✅ Ghostscript 已檢測到: {GHOSTSCRIPT_PATH}")
-            try:
-                result = subprocess.run([GHOSTSCRIPT_PATH, "--version"], capture_output=True, text=True, timeout=5)
-                if result.returncode == 0:
-                    st.info(f"Ghostscript 版本: {result.stdout.strip()}")
-            except Exception as e:
-                st.warning(f"無法獲取 Ghostscript 版本信息: {str(e)}")
+            if GS_VERSION:
+                st.info(f"Ghostscript 版本: {GS_VERSION}")
+            else:
+                try:
+                    result = subprocess.run([GHOSTSCRIPT_PATH, "--version"], capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        st.info(f"Ghostscript 版本: {result.stdout.strip()}")
+                except Exception as e:
+                    st.warning(f"無法獲取 Ghostscript 版本信息: {str(e)}")
         else:
             st.error("❌ Ghostscript 未檢測到，這可能會影響壓縮功能")
             st.info("系統路徑變量 PATH: " + os.environ.get('PATH', '未設置'))
@@ -45,6 +81,27 @@ def pdf_compress_page():
             - macOS: 使用 Homebrew 安裝 `brew install ghostscript`
             - Linux: 使用包管理器安裝 `apt-get install ghostscript` 或 `yum install ghostscript`
             """)
+            
+            # 嘗試診斷問題
+            st.subheader("問題診斷")
+            if st.button("嘗試手動檢測Ghostscript"):
+                try:
+                    # 嘗試使用which命令定位gs
+                    result = subprocess.run(["which", "gs"], capture_output=True, text=True)
+                    if result.returncode == 0 and result.stdout.strip():
+                        gs_path = result.stdout.strip()
+                        st.code(f"找到gs路徑: {gs_path}")
+                        
+                        # 嘗試執行找到的gs
+                        try:
+                            ver_result = subprocess.run([gs_path, "--version"], capture_output=True, text=True)
+                            if ver_result.returncode == 0:
+                                st.success(f"找到的gs可以執行，版本: {ver_result.stdout.strip()}")
+                                st.info("請重新載入頁面，系統可能會重新檢測到Ghostscript")
+                        except Exception as e:
+                            st.error(f"執行找到的gs時出錯: {str(e)}")
+                except Exception as e:
+                    st.error(f"診斷Ghostscript時出錯: {str(e)}")
     
     # 文件上傳
     uploaded_file = st.file_uploader("選擇PDF文件", type="pdf")
